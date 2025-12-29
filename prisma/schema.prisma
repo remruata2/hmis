@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model District {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  facilities Facility[]
+}
+
+model FacilityType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  facilities Facility[]
+}
+
+model Facility {
+  id             String   @id @default(cuid())
+  name           String
+  facilityTypeId String
+  districtId     String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  facilityType   FacilityType @relation(fields: [facilityTypeId], references: [id], onDelete: Cascade)
+  district       District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  users          User[]
+  patientRegistrations PatientRegistration[]
+
+  @@index([facilityTypeId])
+  @@index([districtId])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  facilityId String?
+  role      UserRole @default(FACILITY)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  facility  Facility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId])
+}
+
+model PatientRegistration {
+  id                  String   @id @default(cuid())
+  type                RegistrationType
+  name                String
+  fatherHusbandWifeName String
+  dob                 DateTime
+  address             String
+  gender              Gender
+  referredFrom        String? // Source
+  referredTo          String? // Disposition
+  complaints          String[]
+  otherComplaint      String?
+  // diagnosisPerUD      String // Deprecated
+  diagnoses           ICD10Condition[]
+  entryDate           DateTime @default(now())
+  facilityId          String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  facility            Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId])
+  @@index([entryDate])
+}
+
+enum UserRole {
+  ADMIN
+  FACILITY
+}
+
+enum RegistrationType {
+  IPD
+  CASUALTY
+  OPD
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model ICD10Condition {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String
+  parentId    String?
+  parent      ICD10Condition? @relation("ICD10Hierarchy", fields: [parentId], references: [id])
+  children    ICD10Condition[] @relation("ICD10Hierarchy")
+  patientRegistrations PatientRegistration[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([parentId])
+}
+
