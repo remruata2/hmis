@@ -30,6 +30,7 @@ import {
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { exportUsersToCSV, UserExportRow } from '@/lib/csv-export'
 
 interface Facility {
   id: string
@@ -201,6 +202,19 @@ export default function UsersPage() {
     }
   }
 
+  const handleExport = () => {
+    const rows: UserExportRow[] = users.map((u) => ({
+      username: u.username,
+      role: u.role,
+      facilityName: u.facility?.name || '',
+      facilityType: u.facility?.facilityType?.name || '',
+      district: u.facility?.district?.name || '',
+      createdAt: new Date(u.createdAt).toISOString(),
+      facilityPassword: u.role === 'FACILITY' ? 'facility123' : '',
+    }))
+    exportUsersToCSV(rows, `users-export-${new Date().toISOString().slice(0,10)}.csv`)
+  }
+
   if (isLoading) {
     return <div>Loading...</div>
   }
@@ -209,10 +223,15 @@ export default function UsersPage() {
     <div>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Users</h1>
-        <Button onClick={handleCreate} className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          Add User
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleExport} variant="outline" className="w-full sm:w-auto">
+            Export CSV
+          </Button>
+          <Button onClick={handleCreate} className="w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            Add User
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -416,4 +435,3 @@ export default function UsersPage() {
     </div>
   )
 }
-

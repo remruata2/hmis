@@ -50,3 +50,27 @@ export function formatPatientRegistrationForExport(registration: any): PatientRe
   }
 }
 
+export interface UserExportRow {
+  username: string
+  role: string
+  facilityName: string
+  facilityType: string
+  district: string
+  createdAt: string
+  facilityPassword: string
+}
+
+export function exportUsersToCSV(rows: UserExportRow[], filename: string) {
+  const csv = Papa.unparse(rows, {
+    header: true,
+  })
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
